@@ -18,7 +18,6 @@ public class Order extends BaseModel {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-    private User user;
     private double totalAmount;
     private String paymentMethod;
     private String paymentStatus;

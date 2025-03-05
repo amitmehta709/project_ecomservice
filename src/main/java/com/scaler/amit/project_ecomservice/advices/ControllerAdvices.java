@@ -1,6 +1,7 @@
 package com.scaler.amit.project_ecomservice.advices;
 
 import com.scaler.amit.project_ecomservice.dtos.ExceptionDto;
+import com.scaler.amit.project_ecomservice.exceptions.InsufficientStockException;
 import com.scaler.amit.project_ecomservice.exceptions.InvalidDataException;
 import com.scaler.amit.project_ecomservice.exceptions.NotFoundException;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,7 @@ public class ControllerAdvices {
     @ExceptionHandler(RuntimeException.class)
     ResponseEntity<ExceptionDto> handleRuntimeException(RuntimeException ex){
         ExceptionDto exceptionDto = new ExceptionDto(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        //ex.printStackTrace();
+        ex.printStackTrace();
         return new ResponseEntity<>(exceptionDto, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -26,6 +27,12 @@ public class ControllerAdvices {
 
     @ExceptionHandler(InvalidDataException.class)
     ResponseEntity<ExceptionDto> handleInvalidException(InvalidDataException ex){
+        ExceptionDto exceptionDto = new ExceptionDto(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return new ResponseEntity<>(exceptionDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    ResponseEntity<ExceptionDto> handleInsufficientException(InsufficientStockException ex){
         ExceptionDto exceptionDto = new ExceptionDto(HttpStatus.BAD_REQUEST, ex.getMessage());
         return new ResponseEntity<>(exceptionDto, HttpStatus.BAD_REQUEST);
     }

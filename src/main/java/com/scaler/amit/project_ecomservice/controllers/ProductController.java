@@ -6,7 +6,6 @@ import com.scaler.amit.project_ecomservice.exceptions.InvalidDataException;
 import com.scaler.amit.project_ecomservice.exceptions.NotFoundException;
 import com.scaler.amit.project_ecomservice.models.product.Product;
 import com.scaler.amit.project_ecomservice.services.ProductService;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/productsapi")
+@RequestMapping("api/products")
 public class ProductController {
 
     private ProductService productService;

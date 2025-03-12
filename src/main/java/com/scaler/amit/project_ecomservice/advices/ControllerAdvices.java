@@ -4,6 +4,7 @@ import com.scaler.amit.project_ecomservice.dtos.ExceptionDto;
 import com.scaler.amit.project_ecomservice.exceptions.InsufficientStockException;
 import com.scaler.amit.project_ecomservice.exceptions.InvalidDataException;
 import com.scaler.amit.project_ecomservice.exceptions.NotFoundException;
+import com.scaler.amit.project_ecomservice.exceptions.ResourceAccessForbidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -35,5 +36,11 @@ public class ControllerAdvices {
     ResponseEntity<ExceptionDto> handleInsufficientException(InsufficientStockException ex){
         ExceptionDto exceptionDto = new ExceptionDto(HttpStatus.BAD_REQUEST, ex.getMessage());
         return new ResponseEntity<>(exceptionDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResourceAccessForbidden.class)
+    ResponseEntity<ExceptionDto> handleForbiddenException(ResourceAccessForbidden ex){
+        ExceptionDto exceptionDto = new ExceptionDto(HttpStatus.FORBIDDEN, ex.getMessage());
+        return new ResponseEntity<>(exceptionDto, HttpStatus.FORBIDDEN);
     }
 }

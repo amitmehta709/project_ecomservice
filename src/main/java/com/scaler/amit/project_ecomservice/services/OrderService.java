@@ -6,6 +6,7 @@ import com.scaler.amit.project_ecomservice.dtos.PaymentClientDto;
 import com.scaler.amit.project_ecomservice.exceptions.InsufficientStockException;
 import com.scaler.amit.project_ecomservice.exceptions.NotFoundException;
 import com.scaler.amit.project_ecomservice.exceptions.PaymentClientException;
+import com.scaler.amit.project_ecomservice.kafka.producer.*;
 import com.scaler.amit.project_ecomservice.models.User;
 import com.scaler.amit.project_ecomservice.models.cart.Cart;
 import com.scaler.amit.project_ecomservice.models.cart.CartItem;
@@ -26,15 +27,18 @@ public class OrderService {
     private UserRepository userRepository;
     private CartService cartService;
     private PaymentServiceClient paymentServiceClient;
+    private final EventProducer eventProducer;
 
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
                         UserRepository userRepository, CartService cartService,
-                        @Qualifier("razorpayPaymentClient") PaymentServiceClient paymentServiceClient) {
+                        @Qualifier("razorpayPaymentClient") PaymentServiceClient paymentServiceClient,
+                        EventProducer eventProducer) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
         this.paymentServiceClient = paymentServiceClient;
+        this.eventProducer = eventProducer;
     }
 
 
@@ -129,6 +133,10 @@ public class OrderService {
 
         if("paid".equals(paymentClientDto.getStatus()))
         {
+            // Send event to Kafka
+            OrderCompletedEvent event = new OrderCompletedEvent(order.getId().toString(), order.getUser().getEmail(), "Your order has been completed.");
+            eventProducer.sendOrderCompletedEvent(event);
+            System.out.println("Kafka Event sent.");
             //Payment success
             order.setPaymentId(paymentClientDto.getPaymentId());
             order.setPaymentLink(null);
@@ -194,6 +202,8 @@ public class OrderService {
         if (PaymentStatus.PAID.equals(order.getPaymentStatus())) {
             //Initiate & Perform Refund
             PaymentClientDto paymentClientDto = paymentServiceClient.processRefund(order.getPaymentOrderId());
+            RefundEvent refundEvent = new RefundEvent(order.getId().toString(),order.getUser().getEmail(),"You order has been cancelled", String.valueOf(order.getTotalAmount()));
+            eventProducer.sendRefundEvent(refundEvent);
             order.setRefundId(paymentClientDto.getRefundId());
             order.setPaymentStatus(PaymentStatus.REFUNDED);
             order.setPaymentLink(null);

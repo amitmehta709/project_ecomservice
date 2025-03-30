@@ -7,6 +7,10 @@ import com.scaler.amit.project_ecomservice.models.product.Category;
 import com.scaler.amit.project_ecomservice.models.product.Product;
 import com.scaler.amit.project_ecomservice.repositories.CategoryRepository;
 import com.scaler.amit.project_ecomservice.repositories.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,9 +29,8 @@ public class ProductService {
 
     public Product createProduct(CreateProductDto createProductDto) throws InvalidDataException {
 
-        if(createProductDto.getCategory() == null|| createProductDto.getTitle() == null || createProductDto.getDescription() == null
-        || createProductDto.getRating()<0 || createProductDto.getPrice()<0 || createProductDto.getStockQuantity()<1)
-        {
+        if (createProductDto.getCategory() == null || createProductDto.getTitle() == null || createProductDto.getDescription() == null
+                || createProductDto.getRating() < 0 || createProductDto.getPrice() < 0 || createProductDto.getStockQuantity() < 1) {
             throw new InvalidDataException("Invalid Request Body");
         }
 
@@ -35,8 +38,7 @@ public class ProductService {
         Category addCategory;
         if (optionalCategory.isPresent()) {
             addCategory = optionalCategory.get();
-        }
-        else {
+        } else {
             addCategory = new Category();
             addCategory.setName(createProductDto.getCategory());
             categoryRepository.save(addCategory);
@@ -55,34 +57,39 @@ public class ProductService {
         return productRepository.findAll();
     }
 
+    // Cache individual product by ID
+    @Cacheable(value = "products", key = "#id")
     public Product getProductById(Long id) throws NotFoundException {
         Optional<Product> optionalProduct = productRepository.findById(id);
 
-        if(optionalProduct.isEmpty())
-        {
-            throw new NotFoundException("Product not found with id: "+id);
+        if (optionalProduct.isEmpty()) {
+            throw new NotFoundException("Product not found with id: " + id);
         }
 
-        if(optionalProduct.get().isDeleted())
-        {
-            throw new NotFoundException("Product with id: "+id+ " does not exist");
+        if (optionalProduct.get().isDeleted()) {
+            throw new NotFoundException("Product with id: " + id + " does not exist");
         }
 
         return optionalProduct.get();
     }
 
+    /**
+     * Updates existing product and updates cache automatically
+     */
+    @Caching(
+            put = @CachePut(value = "products", key = "#id"),
+            evict = @CacheEvict(value = "products", key = "#id", beforeInvocation = true)
+    )
     public Product updateProduct(Long id, Map<String, Object> updates) throws NotFoundException {
         Optional<Product> optionalProduct = productRepository.findById(id);
 
-        if(optionalProduct.isEmpty())
-        {
-            throw new NotFoundException("Product not found with id: "+id);
+        if (optionalProduct.isEmpty()) {
+            throw new NotFoundException("Product not found with id: " + id);
         }
 
         Product product = optionalProduct.get();
-        if(product.isDeleted())
-        {
-            throw new NotFoundException("Product with id: "+id+ " does not exist");
+        if (product.isDeleted()) {
+            throw new NotFoundException("Product with id: " + id + " does not exist");
         }
 
         updates.forEach((key, value) -> {
@@ -100,17 +107,15 @@ public class ProductService {
                     product.setRating((Double) value);
                     break;
                 case "stockQuantity":
-                    product.setRating((Integer) value);
+                    product.setStockQuantity((Integer) value);
                     break;
                 case "category":
                     String mapCategory = ((String) value);
-                    if(!product.getCategory().getName().equalsIgnoreCase(mapCategory))
-                    {
+                    if (!product.getCategory().getName().equalsIgnoreCase(mapCategory)) {
                         Optional<Category> optionalCategory = categoryRepository.findByName(mapCategory);
-                        if(optionalCategory.isPresent()){
+                        if (optionalCategory.isPresent()) {
                             product.setCategory(optionalCategory.get());
-                        }
-                        else {
+                        } else {
                             Category addCategory = new Category();
                             addCategory.setName(mapCategory);
                             categoryRepository.save(addCategory);
@@ -123,19 +128,23 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(Long id) throws NotFoundException {
         Optional<Product> optionalProduct = productRepository.findById(id);
-        if(optionalProduct.isEmpty())
-        {
-            throw new NotFoundException("Product not found with id: "+id);
+        if (optionalProduct.isEmpty()) {
+            throw new NotFoundException("Product not found with id: " + id);
         }
 
         Product product = optionalProduct.get();
-        if(product.isDeleted())
-        {
-            throw new NotFoundException("Product with id: "+id+ " does not exist");
+        if (product.isDeleted()) {
+            throw new NotFoundException("Product with id: " + id + " does not exist");
         }
         product.setDeleted(true);
     }
 
+    // Clear all product caches
+    @CacheEvict(value = "products", allEntries = true)
+    public void refreshProductCache() {
+        // Method just for cache eviction
+    }
 }

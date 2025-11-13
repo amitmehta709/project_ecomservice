@@ -27,28 +27,34 @@ This project follows a **microservices architecture**.
 
 ```mermaid
 flowchart LR
-    subgraph EComService[E-Commerce Service]
-        A[Product Module]
-        B[Cart Module]
-        C[Order Module]
-    end
-
-    U[User Service]
-    P[Payment Service]
-    N[Notification Service]
-
-    DB[(MySQL Database)]
-    K[(Kafka Broker)]
-    R[(Redis Cache)]
-
-    A --> DB
-    B --> DB
-    C --> DB
-    C -->|Publish "order-completed-topic"| K
-    N -->|Consume "order-completed-topic"| K
-    P --> EComService
-    U --> EComService
-    EComService --> R
+  subgraph ECom[E-Commerce Service]
+    P[Product Module]
+    C[Cart Module]
+    O[Order Module]
+  end
+  U[User Service]
+  PS[Payment Service]
+  NS[Notification Service]
+  RZ[Razorpay API]
+  SMTP[SMTP Server]
+  K[(Kafka Broker)]
+  DB[(MySQL Database)]
+  RD[(Redis Cache)]
+  P --> DB
+  P --> C
+  P --> RD
+  C --> O
+  O --> DB
+  C --> DB
+  U --> DB
+  O -->|Fetch user details via REST| U
+  O -->|Initiate payment via REST| PS
+  PS -->|Uses Razorpay API| RZ
+  O -->|Publish order-completed-topic| K
+  O -->|Publish refund-created-topic| K
+  K -->|order-completed-topic| NS
+  K -->|refund-created-topic| NS
+  NS -->|Send email via SMTP| SMTP
 ```
 ## ⚙️ Tech Stack
 

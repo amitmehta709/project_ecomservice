@@ -155,4 +155,43 @@ sequenceDiagram
     Notif->>K: Consume "refund-created-topic" event
     Notif->>User: Send refund confirmation email
 ```
+## 🧩 Kafka Integration
 
+The e-commerce system leverages **Apache Kafka** for **asynchronous, event-driven communication** between microservices.  
+This design ensures **loose coupling**, **high scalability**, and **resilience** when handling events such as **order completions** and **refunds**.
+
+---
+
+### 🧠 Purpose of Kafka in the System
+
+- Decouples microservices to prevent direct synchronous dependencies.
+- Ensures reliable message delivery for **order notifications** and **refund updates**.
+- Allows the **Notification Service** to consume events independently of the request/response cycle.
+- Provides a foundation for scaling consumers horizontally.
+
+---
+
+### 🧾 Kafka Topics Overview
+
+| Topic Name | Producer Service | Consumer Service | Description |
+|-------------|------------------|------------------|--------------|
+| `order-completed-topic` | E-Commerce Service | Notification Service | Triggered when an order is successfully placed and payment is confirmed. |
+| `refund-created-topic` | E-Commerce Service | Notification Service | Triggered when a refund is successfully initiated for a cancelled order. |
+
+### 🧰 Prerequisites
+Before running the service locally, ensure the following are installed:
+
+- **Java 17+**
+- **Maven**
+- **Docker** (for Kafka & Zookeeper)
+- **Git**
+- **Kafka CLI** (optional, for testing)
+- **Redis**
+- **MySQL**
+
+### 🧱 Clone the Repository
+
+```bash
+git https://github.com/amitmehta709/project_ecomservice.git
+cd ecom-service
+```
